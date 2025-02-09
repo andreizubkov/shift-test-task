@@ -133,19 +133,20 @@ public class fileFilter {
                             reader[i] = null;
                         }
                     }
-                    if (i == reader.length - 1) {
-                        i = 0;
-                    } else {
-                        i++;
-                    }
-                    boolean close = true;
-                    for (int j = 0; j < reader.length; j++) {
-                        if (reader[j] != null) close = false;
-                    }
-                    if (close == true) break;
                 } catch (IOException ex) {
                     System.out.println(ex.getMessage());
                 }
+                
+                if (i == reader.length - 1) {
+                    i = 0;
+                } else {
+                    i++;
+                }
+                boolean close = true;
+                for (int j = 0; j < reader.length; j++) {
+                    if (reader[j] != null) close = false;
+                }
+                if (close == true) break;
             }
         }
         finally {

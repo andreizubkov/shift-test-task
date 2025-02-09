@@ -9,8 +9,6 @@
   <version>1.0</version>
 
   <name>shift-test-task</name>
-  <!-- FIXME change it to the project's website -->
-  <url>http://www.example.com</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -46,7 +44,6 @@
             <archive>
                 <manifest>
                     <addClasspath>true</addClasspath>
-                    <classpathPrefix>lib/</classpathPrefix>
                     <mainClass>com.andreizubkov.shift_test_task.shiftTestTask</mainClass>
                 </manifest>
             </archive>
