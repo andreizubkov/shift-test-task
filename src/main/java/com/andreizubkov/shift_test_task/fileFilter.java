@@ -5,13 +5,14 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 
 public class fileFilter {
-    File integers;
-    File floats;
-    File strings;
-    File[] inputs;
+    private File integers;
+    private File floats;
+    private File strings;
+    private File[] inputs;
 
     public fileFilter(ArrayList<String> input_path, String result_path, String prefix) {
         inputs = new File[input_path.size()];
@@ -29,23 +30,41 @@ public class fileFilter {
         }
     }
 
+    public String getIntegersPath() {
+        return integers.getAbsolutePath();
+    }
+
+    public String getFloatsPath() {
+        return floats.getAbsolutePath();
+    }
+
+    public String getStringsPath() {
+        return strings.getAbsolutePath();
+    }
+
+    public String[] getInputPath() {
+        String[] result = new String[inputs.length];
+        for (int i = 0; i < inputs.length; i++) result[i] = inputs[i].getAbsolutePath();
+        return result;
+    }
+
     public void filter(boolean append, boolean short_stat, boolean full_stat) {
         FileWriter writeInt = null;
         FileWriter writeFlt = null;
         FileWriter writeStr = null;
 
-        int str_num = 0;
-        int str_min = 0;
-        int str_max = 0;
-        int int_num = 0;
-        int int_sum = 0;
-        int int_min = 0;
-        int int_max = 0;
-        int flt_num = 0;
-        double flt_sum = 0;
+        long str_num = 0;
+        long str_min = 0;
+        long str_max = 0;
+        long int_num = 0;
+        long int_sum = 0;
+        long int_min = 0;
+        long int_max = 0;
+        long flt_num = 0;
+        BigDecimal flt_sum = new BigDecimal("0");
         double flt_min = 0;
         double flt_max = 0;
-        int cur_int = 0;
+        long cur_int = 0;
         double cur_flt = 0;
         double avg = 0;
 
@@ -55,26 +74,27 @@ public class fileFilter {
                     String s;
                     while ((s = reader.readLine()) != null) {
                         if (s.equals("")) continue;
-                        switch(parse(s)) {
-                            case "str":
-                                if (writeStr == null) writeStr = new FileWriter(strings, append);
-                                writeStr.write(s + '\n');
+                        try {
+                            if (s.contains(".")) {
+                                cur_flt = Double.parseDouble(s);
+                                if (writeFlt == null) writeFlt = new FileWriter(floats, append);
+                                writeFlt.write(s + '\n');
 
-                                str_num++;
-                                if (str_num == 1) {
-                                    str_min = s.length();
-                                    str_max = s.length();
+                                flt_num++;
+                                flt_sum = flt_sum.add(new BigDecimal(s));
+                                if (flt_num == 1) {
+                                    flt_min = cur_flt;
+                                    flt_max = cur_flt;
                                 } else {
-                                    if (s.length() < str_min) str_min = s.length();
-                                    if (s.length() > str_max) str_max = s.length();
+                                    if (cur_flt < flt_min) flt_min = cur_flt;
+                                    if (cur_flt > flt_max) flt_max = cur_flt;
                                 }
-                                break;
-                            case "int":
+                            } else {
+                                cur_int = Long.parseLong(s);
                                 if (writeInt == null) writeInt = new FileWriter(integers, append);
                                 writeInt.write(s + '\n');
 
                                 int_num++;
-                                cur_int = Integer.parseInt(s);
                                 int_sum += cur_int;
                                 if (int_num == 1) {
                                     int_min = cur_int;
@@ -83,30 +103,24 @@ public class fileFilter {
                                     if (cur_int < int_min) int_min = cur_int;
                                     if (cur_int > int_max) int_max = cur_int;
                                 }
-                                break;
-                            case "flt":
-                                if (writeFlt == null) writeFlt = new FileWriter(floats, append);
-                                writeFlt.write(s + '\n');
+                            }
+                        } catch (NumberFormatException ex) {
+                            if (writeStr == null) writeStr = new FileWriter(strings, append);
+                            writeStr.write(s + '\n');
 
-                                flt_num++;
-                                cur_flt = Double.parseDouble(s);
-                                flt_sum += cur_flt;
-                                if (flt_num == 1) {
-                                    flt_min = cur_flt;
-                                    flt_max = cur_flt;
-                                } else {
-                                    if (cur_flt < flt_min) flt_min = cur_flt;
-                                    if (cur_flt > flt_max) flt_max = cur_flt;
-                                }
-                                break;
+                            str_num++;
+                            if (str_num == 1) {
+                                str_min = s.length();
+                                str_max = s.length();
+                            } else {
+                                if (s.length() < str_min) str_min = s.length();
+                                if (s.length() > str_max) str_max = s.length();
+                            }
                         }
                     }
                 }
                 catch (IOException ex) {
                     System.out.println(ex.getMessage());
-                }
-                catch (NumberFormatException ex) {
-                    System.out.println("Cast error, stats may be wrong");    
                 }
             }
         }
@@ -132,32 +146,12 @@ public class fileFilter {
             if (int_num != 0) avg = int_sum / int_num;
             System.out.println("    sum = " + int_sum + "\n    average = " + avg);
             System.out.println("Floats:\n   quantity = " + flt_num + "\n    min = " + flt_min + "\n    max = " + flt_max);
-            if (flt_num != 0) avg = flt_sum / flt_num;
-            System.out.println("    sum = " + flt_sum + "\n    average = " + avg);
-        }
-    }
-
-    @SuppressWarnings("unused")
-    private String parse(String s) {
-        boolean isDouble = false;
-        boolean isInt = true;
-        int dot_counter = 0;
-
-        for (int i = 0; i < s.length(); i++) {
-            if (s.charAt(i) == '.') {
-                dot_counter++;
-                isInt = false;
-                isDouble = true;
-                if (dot_counter > 1) { return "str"; }
-                continue;
+            if (flt_num != 0) {
+                avg = flt_sum.doubleValue() / flt_num;
+            } else {
+                avg = 0;
             }
-            if (!Character.isDigit(s.charAt(i))) { return "str"; }
-        }
-        
-        if (isDouble == true) {
-            return "flt";
-        } else {
-            return "int";
+            System.out.println("    sum = " + flt_sum + "\n    average = " + avg);
         }
     }
 }
